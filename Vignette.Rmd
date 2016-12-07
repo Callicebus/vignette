@@ -33,6 +33,8 @@ tbs@proj4string # This command shows us that there is no Coordinate System assig
 proj4string(tbs) <- NA_character_ # remove Coordinate Reference System information from TBS shapefile.
 proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +units=m +datum=WGS84") #Setting UTM WGS84 as our Coortinate Reference System (CRS).
 
+library(curl)
+f <- curl("https://raw.githubusercontent.com/Callicebus/vignette/master/GPScoordinates.csv")
 points <- read.csv("C:/Users/Silvy/Documents/Austin/Classes/Fall 2016/ANT388 Applied Data Analysis/GPScoordinates.csv")
 head(points)
 s <- SpatialPointsDataFrame(coords=c(points[5],points[6]),data=points[4])
