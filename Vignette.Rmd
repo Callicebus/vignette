@@ -1,0 +1,65 @@
+---
+title: Vignette
+author: "Silvy van Kuijk, Rachel Voyt, Allison McNamara"
+date: "November 29, 2016"
+output: html_document
+---
+```{r}
+knitr::opts_chunk$set(
+    echo = TRUE,
+    warning = FALSE,
+    comment = "##",
+    prompt = TRUE,
+    tidy = TRUE,
+    tidy.opts = list(width.cutoff = 75),
+    fig.path = "img/"
+)
+```
+
+
+Before we take you on our expedition, be sure to install the following packages in ***R***: {maptools}, {sp}, {rgdal}, {zoom}, {adehabitatHR}.
+
+
+```{r}
+library(maptools)
+library(sp)
+library(rgdal)
+
+#Let's first load in a polygon of the trail sytem at the Tiputini Biological Station in Ecuador. This can be done with the readShapeLines() function in the *maptools* package. 
+tbs <- readShapeLines("C:/Users/Silvy/Documents/Austin/Tiputini/GIS/trails.shp")
+plot(tbs)
+
+tbs@proj4string # This command shows us that there is no Coordinate System assigned to the TBS shapefile. 
+proj4string(tbs) <- NA_character_ # remove Coordinate Reference System information from TBS shapefile.
+proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +units=m +datum=WGS84") #Setting UTM WGS84 as our Coortinate Reference System (CRS).
+
+points <- read.csv("C:/Users/Silvy/Documents/Austin/Classes/Fall 2016/ANT388 Applied Data Analysis/GPScoordinates.csv")
+head(points)
+s <- SpatialPointsDataFrame(coords=c(points[5],points[6]),data=points[4])
+str(s)
+plot(s, pch = 1, col = s$Group)
+
+utm <- SpatialPoints(s, proj4string=CRS("+proj=utm +zone=18 +south +datum=WGS84"))
+utm <- SpatialPointsDataFrame(utm, data=points[4])
+plot(utm, pch = 20, col = utm$Group)
+plot(tbs, add=TRUE)
+
+library(adehabitatHR)
+kernelK <- kernelUD(utm[,1], h="href")
+RangeK <- getverticeshr(kernelK, 95)
+plot(RangeK, col = RangeK@data$id, add=TRUE)
+```
+
+```{r
+proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +units=m +datum=WGS84")
+utm <- SpatialPoints(s, proj4string=CRS("+proj=utm +zone=18 +units=m +south +datum=WGS84"))
+utm <- SpatialPointsDataFrame(geo, data=points[4])
+plot(utm, pch = 20, col = geo$Group)
+plot(tbs, add=TRUE)
+
+library(adehabitatHR)
+kernelK <- kernelUD(geo <- utm[,1], h="href")
+RangeK <- getverticeshr(kernelK, 95)
+plot(RangeK, col = RangeK@data$id, add=TRUE)
+
+```
