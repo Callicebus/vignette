@@ -16,6 +16,34 @@ knitr::opts_chunk$set(
 )
 ```
 
+##Key Concepts
+
+__Geographic Coordinate Systems__ refer to data that is defined by a 3-D surface and measured in latitude and longitude. The longitude is the east or west location of a point, and the latitude is the north or south location of a point. Latitude and longitude coordinates thus define locations in two or three-dimensional space. An example of a Geographic Coordinate System would be "WGS84". You may also encounter the word "Datum" when you work with GIS. Essentially a Datum provides a frame of reference for measureing locations on the surface of the earth, so "Datum" and "Geographic Coordinate System" are sometimes used interchangeably. 
+
+<img src="http://www.ibm.com/support/knowledgecenter/SSEPEK_11.0.0/spatl/src/art/0sbp5004.gif">
+
+__Projected Coordinate Systems__ refers to data that is defined by a flat 2-D surface and can be measured in units of meters and feet. The most important example is the __The Universal Transverse Mercator projection (UTM)__. This is a cylindrical projection of the world's layout on a map that touches at the equator. A projection is a mathematical transformation of the globe onto some other surface, in this case, a grid. UTM is the typical projection used in GIS and spatial analyses.
+
+<table><tr><td><img src="http://earth-info.nga.mil/GandG/coordsys/images/utm_mgrs_images/utm_fig1.jpg"></td><td><img src="http://www.colorado.edu/geography/gcraft/notes/mapproj/gif/cylinder.gif"</td></tr></table>
+
+__Shapefiles__ (.shp, .dbf, .shx, .prj, .sbn) store nontopological geometry and attribute information for the spatial features in a data set. The geometry for a feature is stored as a shape comprising a set of vector coordinates. Shapefiles can support point, line, and area features. One can create a shapefile on their map by downloading from an external source, digitizing, or programming. Shapefiles can be projected on a map in layers and manipulated. 
+
+__Attributes__ are feature characteristics that can be plotted on a map.   
+
+__Vector data__ models use discrete elements such as points, lines, and polygons to represent the geometry of real-world entities.
+
+__Point__ single point location, such as a GPS reading or a geocoded address  
+
+__Line__ set of ordered points, connected by straight line segments    
+
+__Polygon__ area, marked by one or more enclosing lines, possibly containing holes 
+
+__Raster data__ models are the natural means to represent continuous spatial features or phenomenon. They define the world as a regular set of cells in a grid pattern that are square and evenly spaced in the x and y directions.    
+
+__Grid__ collection of points or rectangular cells, organised in a regular lattice (raster data)    
+
+
+----
 
 Before we take you on our expedition to learn how to analyze home range data, be sure to install the following packages in ***R***: {maptools}, {sp}, {rgdal}, {zoom}, {adehabitatHR}, {curl}, {ggplot2}.
 
@@ -29,7 +57,12 @@ library(ggplot2)
 library(curl)
 ```
 
-We will be looking at data from three groups if titi monkeys (*Callicebus discolor*) that are studied at the Tiputini Biodiversity Station in Ecuador. 
+##Part 1: Importing data
+###Importing and projecting a Shapefile
+
+We will be looking at data from three groups of titi monkeys (*Callicebus discolor*) that are studied at the Tiputini Biodiversity Station in Ecuador. 
+<table><tr><td><img src="https://66.media.tumblr.com/4cdb81e3f81d02ee96bdd4ee8aff1521/tumblr_nidsaaWzP11sxw6mio1_500.jpg" style="width: 400px;"/></td><td><img src="http://www.saveamericasforests.org/Yasuni/Pics/Biodiversity/Red-Titi-Monkey.jpg" alt="Callicebus discolor" style="width: 400px;"/></td></tr></table>
+
 Let's first load in a polygon of the trail sytem at research station. This can be done with the readShapeLines() function in the *maptools* package. 
 
 ```{r}
@@ -37,11 +70,7 @@ tbs <- readShapeLines("C:/Users/Silvy/Documents/Austin/Tiputini/GIS/trails.shp")
 plot(tbs)
 ```
 
-One of the complex parts of working with these file types is dealing with coordinate reference systems. This is largely due to the fact that Geographical Coordinate Systems and Projected Coordinate Systems are different in how they project the bumpy ellipsoid that is our planet onto a plane.
-
-<img src="http://ccar.colorado.edu/asen5050/projects/projects_2013/Chong_Joshua/GRACE_globe_animation.gif">
-
-So once you have loaded in a Shapefile, it is important to first find out what coordinate system is used, if any. This is done easily with with *proj4string* commands and functions in the package *sp*.
+So once you have loaded in a Shapefile, it is important to first find out what coordinate system is used, if any. This is done easily with the *proj4string* commands and functions in the package *sp*.
 
 ```{r}
 tbs@proj4string # This command shows us that there is no Coordinate System assigned to the TBS shapefile. 
@@ -54,12 +83,12 @@ proj4string(tbs) <- NA_character_ # remove Coordinate Reference System informati
 
 Now we can specify our new coordinate system, which will be the Projected Coordinate System UTM (Universal Transverse Mercator). This projects the earth on a flat surface and then uses x and y coordinates to locate points, just like in the figure below:
 
-<img src="http://earth-info.nga.mil/GandG/coordsys/images/utm_mgrs_images/utm_fig1.jpg">
-
 ```{r}
 proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +datum=WGS84") #Setting UTM WGS84 as our Coortinate Reference System (CRS).
 plot(tbs) #Tadaaa!
 ```
+
+###Importing and projecting .csv data
 
 Now that we have defined the coordinate system of the shapefile, we can pull in the ranging data collected from the titi monkeys between July 2014 to June 2015. These data have been cleaned in advance and stored in a .csv file on GitHub.
 ```{r}
@@ -75,6 +104,10 @@ str(spdf)
 plot(spdf, pch = 1, col = spdf$Group)
 
 utm <- SpatialPoints(spdf, proj4string=CRS("+proj=utm +zone=18 +south +datum=WGS84"))
+
+# If you would like to transform your data to Lat/Long rather then UTM, you can use this code:
+# latlong <- spTransform(utm, CRS("+proj=longlat +datum=WGS84"))
+
 utm <- SpatialPointsDataFrame(utm, data=points[4])
 plot(tbs)
 plot(utm, pch = 20, col = utm$Group, add=T) #Simply adding add = TRUE to your code will overlay the second plot on the first. 
@@ -84,6 +117,9 @@ If you want to zoom in or out on your plots, you can use a simple command from t
 > inout.zoom()
 
 Now you can zoom in by left-clicking on your plot. By right-clicking near the edge of your plot you can zoom out. Last, you can leave this function by hitting Escape. 
+
+##Part 2: Analyzing home range data
+###Creating home range polygons and estimating home range size
 
 Now that we have all points plotted, we can draw polygons around the points of each group, representing the home ranges of the monkeys during the one-year period. We'll do this with the help of a package build especially for home range measurements. 
 NOTE: the functions in this package work best if you use the UTM projections!
@@ -99,18 +135,14 @@ We can now use these polygons to estimate home range size quite simply:
 as.data.frame(TitiRange)
 ```
 
+###How are home ranges used? 
+
 Let's look only at the home range of Callicebus group L. Using our points, we can also find out which parts of their home range re used more often, and which parts are used less frequently.
 First, let's subset the data so we only have the ranging points of Callicebus L.
 ```{r}
+library(RColorBrewer)
 Lpoints <- points[points$Group == "Callicebus L",]
-hothothot <- ggplot(Lpoints, aes(x=UTMX, y=UTMY)) + geom_point() + stat_density2d(aes(fill=..density..), geom = "tile", contour = FALSE) + scale_fill_gradient2(low = "white", high = "green")
-plot(hothothot)
-plot(tbs, add=T)
-plot(TitiRange, add=T)
+hothothot <- ggplot(Lpoints, aes(x=UTMX, y=UTMY)) + stat_density2d(aes(fill=..density..), geom = "tile", contour = FALSE) + geom_point(size = 0.25) + scale_fill_gradientn(colours=rev(brewer.pal(7,"Spectral"))) + coord_fixed() + ggtitle("Titis Like it HOTHOTHOT")
+hothothot
 
 ```
-
-
-CallicebusL <- utm[utm@data$Group == "Callicebus L"]
-plot(CallicebusL, pch = 20, col = "green")
-plot(tbs, add=T)
