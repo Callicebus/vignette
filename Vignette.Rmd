@@ -57,6 +57,8 @@ library(ggplot2)
 library(curl)
 ```
 
+
+
 #Section 2: Whatever the title was...
 
 ##Part 1: Importing data
@@ -65,31 +67,32 @@ library(curl)
 For this next section we will be looking at data from three groups of titi monkeys (*Callicebus discolor*) that are studied at the Tiputini Biodiversity Station in Ecuador. 
 <table><tr><td><img src="https://66.media.tumblr.com/4cdb81e3f81d02ee96bdd4ee8aff1521/tumblr_nidsaaWzP11sxw6mio1_500.jpg" style="width: 400px;"/></td><td><img src="http://www.saveamericasforests.org/Yasuni/Pics/Biodiversity/Red-Titi-Monkey.jpg" alt="Callicebus discolor" style="width: 400px;"/></td></tr></table>
 
-These data have been collected with a GPS. Every twenty seconds the GPS collects a ranging point, which is a set of data that contains, among others, the x and y coordinates for the location, altitude of the location, and a timestamp. From that, we (read: Tony) have created a .csv file that contains a subset of these points, twenty minutes apart.
+These data have been collected with a GPS. Every twenty seconds the GPS collects a *ranging point* automatically, which consists of the x and y coordinates for the location, altitude of the location, and a timestamp. From that, we (read: Tony) have created a .csv file that contains a subset of these points, twenty minutes apart. For today's purposes we will use a subset of data from a one-year period: July 2014 to June 2015.
 
-Let's first load in a polygon of the trail sytem at research station. This can be done with the readShapeLines() function in the *maptools* package. 
+Let's first load in a polygon of the trail sytem at research station. This can be done with the **readShapeLines()** command in the **maptools** package. 
 
 ```{r}
 tbs <- readShapeLines("C:/Users/Silvy/Documents/Austin/Tiputini/GIS/trails.shp")
+#tbs <- readShapeLines("~/Desktop/GIS+R_Data/Tiputini/trail_polylines.shp")
 plot(tbs)
 ```
 
-So once you have loaded in a Shapefile, it is important to first find out what coordinate system is used, if any. This is done easily with the *proj4string* commands and functions in the package *sp*.
+So once you have loaded in a Shapefile, it is important to first find out what coordinate system is used, if any. This is done easily with the **proj4string** commands and functions in the package **sp**.
 
 ```{r}
 tbs@proj4string # This command shows us that there is no Coordinate System assigned to the TBS shapefile. 
 ```
 
-To be sure there are no coordinate data related to the file in any way, run the following code. Even though it seems there is no chosen projection, in this case the new projection will not be used correctly without using this command.
+To be sure there are no coordinate data related to the file in any way, run the following code also from the **sp** package. Even though it seems there is no chosen projection, in this case our new projection will not be used correctly without using this command first.
 ```{r}
 proj4string(tbs) <- NA_character_ # remove Coordinate Reference System information from TBS shapefile.
 ```
 
-Now we can specify our new coordinate system, which will be the Projected Coordinate System UTM (Universal Transverse Mercator). This projects the earth on a flat surface and then uses x and y coordinates to locate points, just like in the figure below:
+Now we can specify our new coordinate system, which will be the Projected Coordinate System UTM (Universal Transverse Mercator). This projects the earth on a flat surface and then uses x and y coordinates to pinpoint locations on a 2D surface. The command for this is **CRS()** from the **sp** package.
 
 ```{r}
-proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +datum=WGS84") #Setting UTM WGS84 as our Coortinate Reference System (CRS).
-plot(tbs) #Tadaaa!
+proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +datum=WGS84") #Setting UTM WGS84 as our Coordinate Reference System (CRS).
+plot(tbs)
 ```
 
 ###Importing and projecting .csv data
@@ -117,15 +120,22 @@ plot(tbs)
 plot(utm, pch = 20, col = utm$Group, add=T) #Simply adding add = TRUE to your code will overlay the second plot on the first. 
 ```
 
-If you want to zoom in or out on your plots, you can use a simple command from the {zoom} package. Here we have not put it in a code block, because you can only use this commend directly in your ***R*** console. Type the following:
+If you want to zoom in or out on your plots, you can use a simple command from the **zoom** package. Here we have not put it in a code block, because you can only use this commend directly in your ***R*** console. Type the following:
+
 > inout.zoom()
 
-Now you can zoom in by left-clicking on your plot. By right-clicking near the edge of your plot you can zoom out. Last, you can leave this function by hitting Escape. 
+Now you can zoom in by left-clicking on your plot. By left-clicking near the edge of your plot you can zoom out. Last, you can leave this function by hitting Escape.
+
+NOTE: Always make sure that every file you work with has the same coordinate system. If you have different projections or datums, your layers will not overlay and you'll likely feel like the baboon in this GIF. These problems are created by the fact that geographical and projected coordinate systems project data in a different way (in 3D versus 2D representations, respectively) and the fact that the Earth isn't actually perfectly round!
+
+
+<table><tr><td><img src="https://i.makeagif.com/media/8-17-2015/ow6u2T.gif" style="width: 500px;"/></td><td><img src="http://ccar.colorado.edu/asen5050/projects/projects_2013/Chong_Joshua/GRACE_globe_animation.gif" alt="Callicebus discolor" style="width: 300px;"/></td></tr></table>
+
 
 ##Part 2: Analyzing home range data
 ###Creating home range polygons and estimating home range size
 
-Now that we have all points plotted, we can draw polygons around the points of each group, representing the home ranges of the monkeys during the one-year period. We'll do this with the help of a package build especially for home range measurements. 
+Now that we have all points plotted, we can draw polygons around the points of each group, representing the home ranges of the monkeys during the one-year period. We'll do this with the help of a package build especially for home range measurements: **adehabitatHR**
 NOTE: the functions in this package work best if you use the UTM projections!
 ```{r}
 kernel <- kernelUD(utm[,1], h="href")
