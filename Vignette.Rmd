@@ -136,7 +136,10 @@ NOTE: Always make sure that every file you work with has the same coordinate sys
 ###Creating home range polygons and estimating home range size
 
 Now that we have all points plotted, we can draw polygons around the points of each group, representing the home ranges of the monkeys during the one-year period. We'll do this with the help of a package build especially for home range measurements: **adehabitatHR**
+
 NOTE: the functions in this package work best if you use the UTM projections!
+
+First we calculate the utilization distribution with the help of the **kernelUD()** command. The ulitization distribution is a two dimensional probability density function that represents the probability of finding an animal in a defined area within its home range. Next we will use the command **getverticeshr()** to draw polygons around the kernel UD's that have just been calculates. 
 ```{r}
 kernel <- kernelUD(utm[,1], h="href")
 TitiRange <- getverticeshr(kernel, 95)
@@ -144,18 +147,22 @@ plot(TitiRange, border = TitiRange@data$id)
 plot(tbs, add=T)
 ```
 
-We can now use these polygons to estimate home range size quite simply:
+There are many ways to calculate home range sizes, but by far the quickest and easiest way to calculate home range size is by using the **as.data.frame()** command. If you are working with Lat/Long coordinates, you will want to reproject them into UTM coordinates, because the function below only gives you a home range size in hectares if you use UTM coordinates (which are usually in meters).
 ```{r}
 as.data.frame(TitiRange)
 ```
 
 ###How are home ranges used? 
 
-Let's look only at the home range of Callicebus group L. Using our points, we can also find out which parts of their home range re used more often, and which parts are used less frequently.
+Let's look only at the home range of Callicebus group L. Using our points, we can also find out which parts of their home range are used more often, and which parts are used less frequently.
 First, let's subset the data so we only have the ranging points of Callicebus L.
 ```{r}
 library(RColorBrewer)
 Lpoints <- points[points$Group == "Callicebus L",]
+```
+
+There are many ways to create a heat map, but the easiest way seems to be through **ggplot**. You use the ranging points from group Callicebus L and then create the heat map by adding **stat_density2d()**. You can add fancy colors with the **RColorBrewer** package.
+```{r}
 hothothot <- ggplot(Lpoints, aes(x=UTMX, y=UTMY)) + stat_density2d(aes(fill=..density..), geom = "tile", contour = FALSE) + geom_point(size = 0.25) + scale_fill_gradientn(colours=rev(brewer.pal(7,"Spectral"))) + coord_fixed() + ggtitle("Titis Like it HOTHOTHOT")
 hothothot
 
