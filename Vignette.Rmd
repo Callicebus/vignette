@@ -103,7 +103,7 @@ Let's look only at the home range of Callicebus group L. Using our points, we ca
 First, let's subset the data so we only have the ranging points of Callicebus L.
 ```{r}
 Lpoints <- points[points$Group == "Callicebus L",]
-hothothot <- ggplot(Lpoints, aes(x=UTMX, y=UTMY)) + geom_point() + stat_density2d(aes(fill=..density..), geom = "tile", contour = FALSE) + scale_fill_gradient2(low = "green", high = "blue")
+hothothot <- ggplot(Lpoints, aes(x=UTMX, y=UTMY)) + geom_point() + stat_density2d(aes(fill=..density..), geom = "tile", contour = FALSE) + scale_fill_gradient2(low = "white", high = "green")
 plot(hothothot)
 plot(tbs, add=T)
 plot(TitiRange, add=T)
