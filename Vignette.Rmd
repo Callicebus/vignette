@@ -17,51 +17,95 @@ knitr::opts_chunk$set(
 ```
 
 
-Before we take you on our expedition, be sure to install the following packages in ***R***: {maptools}, {sp}, {rgdal}, {zoom}, {adehabitatHR}.
+Before we take you on our expedition to learn how to analyze home range data, be sure to install the following packages in ***R***: {maptools}, {sp}, {rgdal}, {zoom}, {adehabitatHR}, {curl}, {ggplot2}.
 
 
 ```{r}
 library(maptools)
 library(sp)
 library(rgdal)
+library(adehabitatHR)
+library(ggplot2)
+library(curl)
+```
 
-#Let's first load in a polygon of the trail sytem at the Tiputini Biological Station in Ecuador. This can be done with the readShapeLines() function in the *maptools* package. 
+We will be looking at data from three groups if titi monkeys (*Callicebus discolor*) that are studied at the Tiputini Biodiversity Station in Ecuador. 
+Let's first load in a polygon of the trail sytem at research station. This can be done with the readShapeLines() function in the *maptools* package. 
+
+```{r}
 tbs <- readShapeLines("C:/Users/Silvy/Documents/Austin/Tiputini/GIS/trails.shp")
 plot(tbs)
+```
 
+One of the complex parts of working with these file types is dealing with coordinate reference systems. This is largely due to the fact that Geographical Coordinate Systems and Projected Coordinate Systems are different in how they project the bumpy ellipsoid that is our planet onto a plane.
+
+<img src="http://ccar.colorado.edu/asen5050/projects/projects_2013/Chong_Joshua/GRACE_globe_animation.gif">
+
+So once you have loaded in a Shapefile, it is important to first find out what coordinate system is used, if any. This is done easily with with *proj4string* commands and functions in the package *sp*.
+
+```{r}
 tbs@proj4string # This command shows us that there is no Coordinate System assigned to the TBS shapefile. 
+```
+
+To be sure there are no coordinate data related to the file in any way, run the following code. Even though it seems there is no chosen projection, in this case the new projection will not be used correctly without using this command.
+```{r}
 proj4string(tbs) <- NA_character_ # remove Coordinate Reference System information from TBS shapefile.
-proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +units=m +datum=WGS84") #Setting UTM WGS84 as our Coortinate Reference System (CRS).
+```
 
-library(curl)
+Now we can specify our new coordinate system, which will be the Projected Coordinate System UTM (Universal Transverse Mercator). This projects the earth on a flat surface and then uses x and y coordinates to locate points, just like in the figure below:
+
+<img src="http://earth-info.nga.mil/GandG/coordsys/images/utm_mgrs_images/utm_fig1.jpg">
+
+```{r}
+proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +datum=WGS84") #Setting UTM WGS84 as our Coortinate Reference System (CRS).
+plot(tbs) #Tadaaa!
+```
+
+Now that we have defined the coordinate system of the shapefile, we can pull in the ranging data collected from the titi monkeys between July 2014 to June 2015. These data have been cleaned in advance and stored in a .csv file on GitHub.
+```{r}
 f <- curl("https://raw.githubusercontent.com/Callicebus/vignette/master/GPScoordinates.csv")
-points <- read.csv("C:/Users/Silvy/Documents/Austin/Classes/Fall 2016/ANT388 Applied Data Analysis/GPScoordinates.csv")
+points <- read.csv(f)
 head(points)
-s <- SpatialPointsDataFrame(coords=c(points[5],points[6]),data=points[4])
-str(s)
-plot(s, pch = 1, col = s$Group)
+```
 
-utm <- SpatialPoints(s, proj4string=CRS("+proj=utm +zone=18 +south +datum=WGS84"))
+As you can see, the coordinates in this file are already in the UTM projection, but we will have to tell ***R*** that. This is also done through commands in the sp package. First, you'll have to convert the .csv file to a dataframe for spatial points, and then set the right coordinate system.
+```{r}
+spdf <- SpatialPointsDataFrame(coords=c(points[5],points[6]),data=points[4]) #Column 5 has the X-coordinates, column 6 has the Y-coordinates, and column 4 has important attribute data.
+str(spdf)
+plot(spdf, pch = 1, col = spdf$Group)
+
+utm <- SpatialPoints(spdf, proj4string=CRS("+proj=utm +zone=18 +south +datum=WGS84"))
 utm <- SpatialPointsDataFrame(utm, data=points[4])
-plot(utm, pch = 20, col = utm$Group)
-plot(tbs, add=TRUE)
-
-library(adehabitatHR)
-kernelK <- kernelUD(utm[,1], h="href")
-RangeK <- getverticeshr(kernelK, 95)
-plot(RangeK, col = RangeK@data$id, add=TRUE)
+plot(tbs)
+plot(utm, pch = 20, col = utm$Group, add=T) #Simply adding add = TRUE to your code will overlay the second plot on the first. 
 ```
 
-```{r
-proj4string(tbs) <- CRS("+proj=utm +zone=18 +south +units=m +datum=WGS84")
-utm <- SpatialPoints(s, proj4string=CRS("+proj=utm +zone=18 +units=m +south +datum=WGS84"))
-utm <- SpatialPointsDataFrame(geo, data=points[4])
-plot(utm, pch = 20, col = geo$Group)
-plot(tbs, add=TRUE)
+Now that we have all points plotted, we can draw polygons around the points of each group, representing the home ranges of the monkeys during the one-year period. We'll do this with the help of a package build especially for home range measurements. 
+NOTE: the functions in this package work best if you use the UTM projections!
+```{r}
+kernel <- kernelUD(utm[,1], h="href")
+TitiRange <- getverticeshr(kernel, 95)
+plot(TitiRange, border = TitiRange@data$id)
+plot(tbs, add=T)
+```
 
-library(adehabitatHR)
-kernelK <- kernelUD(geo <- utm[,1], h="href")
-RangeK <- getverticeshr(kernelK, 95)
-plot(RangeK, col = RangeK@data$id, add=TRUE)
+We can now use these polygons to estimate home range size quite simply:
+```{r}
+as.data.frame(TitiRange)
+```
+
+Let's look only at the home range of Callicebus group L. Using our points, we can also find out which parts of their home range re used more often, and which parts are used less frequently.
+First, let's subset the data so we only have the ranging points of Callicebus L.
+```{r}
+Lpoints <- points[points$Group == "Callicebus L",]
+hothothot <- ggplot(Lpoints, aes(x=UTMX, y=UTMY)) + geom_point() + stat_density2d(aes(fill=..density..), geom = "tile", contour = FALSE) + scale_fill_gradient2(low = "green", high = "blue")
+plot(hothothot)
+plot(tbs, add=T)
+plot(TitiRange, add=T)
 
 ```
+
+
+CallicebusL <- utm[utm@data$Group == "Callicebus L"]
+plot(CallicebusL, pch = 20, col = "green")
+plot(tbs, add=T)
