@@ -57,11 +57,15 @@ library(ggplot2)
 library(curl)
 ```
 
+#Section 2: Whatever the title was...
+
 ##Part 1: Importing data
 ###Importing and projecting a Shapefile
 
-We will be looking at data from three groups of titi monkeys (*Callicebus discolor*) that are studied at the Tiputini Biodiversity Station in Ecuador. 
+For this next section we will be looking at data from three groups of titi monkeys (*Callicebus discolor*) that are studied at the Tiputini Biodiversity Station in Ecuador. 
 <table><tr><td><img src="https://66.media.tumblr.com/4cdb81e3f81d02ee96bdd4ee8aff1521/tumblr_nidsaaWzP11sxw6mio1_500.jpg" style="width: 400px;"/></td><td><img src="http://www.saveamericasforests.org/Yasuni/Pics/Biodiversity/Red-Titi-Monkey.jpg" alt="Callicebus discolor" style="width: 400px;"/></td></tr></table>
+
+These data have been collected with a GPS. Every twenty seconds the GPS collects a ranging point, which is a set of data that contains, among others, the x and y coordinates for the location, altitude of the location, and a timestamp. From that, we (read: Tony) have created a .csv file that contains a subset of these points, twenty minutes apart.
 
 Let's first load in a polygon of the trail sytem at research station. This can be done with the readShapeLines() function in the *maptools* package. 
 
