@@ -80,6 +80,11 @@ plot(tbs)
 plot(utm, pch = 20, col = utm$Group, add=T) #Simply adding add = TRUE to your code will overlay the second plot on the first. 
 ```
 
+If you want to zoom in or out on your plots, you can use a simple command from the {zoom} package. Here we have not put it in a code block, because you can only use this commend directly in your ***R*** console. Type the following:
+> inout.zoom()
+
+Now you can zoom in by left-clicking on your plot. By right-clicking near the edge of your plot you can zoom out. Last, you can leave this function by hitting Escape. 
+
 Now that we have all points plotted, we can draw polygons around the points of each group, representing the home ranges of the monkeys during the one-year period. We'll do this with the help of a package build especially for home range measurements. 
 NOTE: the functions in this package work best if you use the UTM projections!
 ```{r}
